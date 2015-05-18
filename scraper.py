@@ -12,9 +12,6 @@ import sys
 import urltools
 
 
-bad_extensions = tuple([".zip", ".pdf", ".do", ".pl"])
-
-
 def _find_addys(text):
     addy_regex = re.compile("(?:mailto:)?([-+.\w]+@[-+.\w]+\.[a-z]+)", re.I)
     return re.findall(addy_regex, text)
@@ -49,10 +46,6 @@ def _links(url, content):
     ret = set(map(urlunsplit, ret))
     ret = set(map(urltools.normalize, ret))
     ret = set(urljoin(url, link) for link in ret)
-    ret = set(filter(lambda e: not e.endswith(bad_extensions), ret))
-    ret = set(filter(lambda e: not re.search(r'pdf', e, re.I), ret))
-    # print("len(ret) == ",len(ret))
-    # pprint(ret)
     return ret
 
 
@@ -72,11 +65,17 @@ def _scrape(urls):
         # print("urls_old == ", urls_old)
         print("Processing \"%s\"" % url)
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers={'Accept': 'text/html'})
         except(requests.exception.MissingSchema,
                requests.exception.TooManyRedirects,
                requests.exception.ConnectionError):
             print("Error on %s" % url)
+            continue
+
+        if not response.ok:
+            continue
+
+        if not response.headers['content-type'].startswith('text'):
             continue
 
         emails.update(set(_find_addys(response.text)))
@@ -93,4 +92,3 @@ def main():
 
 if '__main__' == __name__:
     main()
-    exit(0)
