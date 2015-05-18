@@ -56,10 +56,9 @@ def _links(url, content):
     return ret
 
 
-def main():
-    print("main()")
+def _scrape(urls):
     emails = set()
-    urls_new = set(map(_sanitize, sys.argv[:0:-1]))
+    urls_new = set(map(_sanitize, urls))
     urls_old = set()
     while urls_new:
         print("len(emails)   == ", len(emails))
@@ -84,10 +83,14 @@ def main():
 
         urls_new.update(_links(url, response.text) - urls_old)
 
-    return 0
+    return emails
+
+
+def main():
+    emails = _scrape(sys.argv[1:])
+    print(emails)
 
 
 if '__main__' == __name__:
     main()
-    print(emails)
     exit(0)
